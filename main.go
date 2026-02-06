@@ -16,7 +16,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/snyk/snyk-refresh/internal"
+	"github.com/sam1el/snyk-refresh/internal"
 )
 
 // Set by GoReleaser ldflags at build time.
@@ -34,10 +34,10 @@ type OrgMeta struct {
 
 // RefreshOutput is the JSON structure written to the output file.
 type RefreshOutput struct {
-	GroupID      string                    `json:"groupId,omitempty"`
-	Orgs         map[string]OrgMeta        `json:"orgs"`
-	Integrations map[string]string         `json:"integrations"`
-	Targets      []internal.ImportTarget   `json:"targets"`
+	GroupID      string                  `json:"groupId,omitempty"`
+	Orgs         map[string]OrgMeta      `json:"orgs"`
+	Integrations map[string]string       `json:"integrations"`
+	Targets      []internal.ImportTarget `json:"targets"`
 }
 
 func main() {
@@ -92,13 +92,13 @@ func main() {
 
 	// Process orgs concurrently
 	type orgResult struct {
-		targets      []internal.ImportTarget
-		orgMeta      map[string]OrgMeta
-		intMeta      map[string]string
-		gitlabCount  int
-		err          error
-		orgID        string
-		orgLabel     string
+		targets     []internal.ImportTarget
+		orgMeta     map[string]OrgMeta
+		intMeta     map[string]string
+		gitlabCount int
+		err         error
+		orgID       string
+		orgLabel    string
 	}
 
 	results := make(chan orgResult, len(orgs))

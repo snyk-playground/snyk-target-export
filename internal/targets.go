@@ -26,13 +26,13 @@ type ImportTarget struct {
 // project ID required by the import API.
 var scmOrigins = map[string]bool{
 	"github":                true,
-	"github-cloud-app":     true,
-	"github-enterprise":    true,
-	"bitbucket-cloud":      true,
+	"github-cloud-app":      true,
+	"github-enterprise":     true,
+	"bitbucket-cloud":       true,
 	"bitbucket-connect-app": true,
-	"bitbucket-cloud-app":  true,
-	"azure-repos":          true,
-	"bitbucket-server":     true,
+	"bitbucket-cloud-app":   true,
+	"azure-repos":           true,
+	"bitbucket-server":      true,
 }
 
 // IsSCMOrigin returns true if the origin is a supported SCM type.

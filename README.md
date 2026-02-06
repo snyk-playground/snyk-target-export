@@ -23,26 +23,29 @@ snyk-api-import import --file=refresh-import-targets.json
 
 ## Installation
 
-Download the binary for your platform from the releases page, or build from source:
+### Download a release
+
+Download the binary for your platform from the [Releases](https://github.com/sam1el/snyk-refresh/releases) page. Archives are available for Linux, macOS, and Windows on both amd64 and arm64 architectures.
+
+### Build from source
 
 ```bash
-git clone https://github.com/snyk/snyk-refresh.git
+git clone https://github.com/sam1el/snyk-refresh.git
 cd snyk-refresh
-go build -o snyk-refresh .
+make build
 ```
 
-### Cross-compile
+The `Makefile` includes several useful targets:
 
-```bash
-# Linux (x86_64)
-GOOS=linux GOARCH=amd64 go build -o snyk-refresh-linux-amd64 .
-
-# macOS (Apple Silicon)
-GOOS=darwin GOARCH=arm64 go build -o snyk-refresh-darwin-arm64 .
-
-# Windows
-GOOS=windows GOARCH=amd64 go build -o snyk-refresh-windows-amd64.exe .
-```
+| Target | Description |
+|--------|-------------|
+| `make build` | Build the binary with version info embedded |
+| `make test` | Run tests with race detection |
+| `make lint` | Check formatting and run `go vet` |
+| `make fmt` | Auto-format all Go source files |
+| `make check` | Run fmt, lint, and test together |
+| `make snapshot` | Build a local GoReleaser snapshot (no publish) |
+| `make clean` | Remove built binaries and dist/ |
 
 ## Prerequisites
 
@@ -54,13 +57,13 @@ GOOS=windows GOARCH=amd64 go build -o snyk-refresh-windows-amd64.exe .
 ### Scan all organizations in a group
 
 ```bash
-./snyk-refresh --groupId=237b9af7-7cc4-4325-9975-b33f6d1e14e6
+./snyk-refresh --groupId=<your-group-id>
 ```
 
 ### Scan a single organization
 
 ```bash
-./snyk-refresh --orgId=b70bf890-8f4f-467b-986a-c000207001ac
+./snyk-refresh --orgId=<your-org-id>
 ```
 
 ### Filter to a specific integration type
@@ -68,7 +71,7 @@ GOOS=windows GOARCH=amd64 go build -o snyk-refresh-windows-amd64.exe .
 Only include targets from a particular SCM integration:
 
 ```bash
-./snyk-refresh --groupId=<id> --integrationType=github-cloud-app
+./snyk-refresh --groupId=<your-group-id> --integrationType=github-cloud-app
 ```
 
 ### Control concurrency
@@ -76,13 +79,19 @@ Only include targets from a particular SCM integration:
 Adjust how many organizations are processed in parallel (default: 5):
 
 ```bash
-./snyk-refresh --groupId=<id> --concurrency=10
+./snyk-refresh --groupId=<your-group-id> --concurrency=10
 ```
 
 ### Write output to a custom location
 
 ```bash
-./snyk-refresh --groupId=<id> --output=/path/to/targets.json
+./snyk-refresh --groupId=<your-group-id> --output=/path/to/targets.json
+```
+
+### Check the version
+
+```bash
+./snyk-refresh --version
 ```
 
 ## Options
@@ -91,16 +100,17 @@ Adjust how many organizations are processed in parallel (default: 5):
 |------|----------|---------|-------------|
 | `--groupId` | One of groupId or orgId | | Snyk group ID. All orgs in this group will be scanned. |
 | `--orgId` | One of groupId or orgId | | Single Snyk org ID to scan. |
-| `--integrationType` | No | all types | Filter to a specific integration type. |
-| `--concurrency` | No | 5 | Number of organizations to process in parallel. |
+| `--integrationType` | No | all types | Filter to a specific integration type (e.g. `github-cloud-app`). |
+| `--concurrency` | No | `5` | Number of organizations to process in parallel. |
 | `--output` | No | `refresh-import-targets.json` | Output file path. |
+| `--version` | No | | Print version information and exit. |
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `SNYK_TOKEN` | Yes | Snyk API token (also accepts `SNYK_API_TOKEN`). |
-| `SNYK_API` | No | Override the Snyk API base URL (e.g. `https://api.eu.snyk.io` for EU deployments). |
+| `SNYK_API` | No | Override the Snyk API base URL (e.g. `https://api.eu.snyk.io` for EU deployments). Also accepts `SNYK_API_URL`. |
 
 ## Supported Integrations
 
@@ -109,6 +119,7 @@ Adjust how many organizations are processed in parallel (default: 5):
 - GitHub Enterprise
 - Bitbucket Cloud
 - Bitbucket Cloud App
+- Bitbucket Connect App
 - Bitbucket Server
 - Azure Repos
 
@@ -127,18 +138,18 @@ The output file includes metadata to make it easy to review:
 
 ```json
 {
-  "groupId": "237b9af7-...",
+  "groupId": "<your-group-id>",
   "orgs": {
-    "org-uuid": { "name": "My Org", "slug": "my-org" }
+    "<org-id>": { "name": "My Org", "slug": "my-org" }
   },
   "integrations": {
-    "integration-uuid": "github-cloud-app"
+    "<integration-id>": "github-cloud-app"
   },
   "targets": [
     {
       "target": { "owner": "my-org", "name": "my-repo", "branch": "main" },
-      "orgId": "org-uuid",
-      "integrationId": "integration-uuid"
+      "orgId": "<org-id>",
+      "integrationId": "<integration-id>"
     }
   ]
 }
@@ -153,10 +164,10 @@ When a project has no custom branch set, the import will use the repository's de
 ## Example: Adding SCA to Existing Snyk Code Projects
 
 ```bash
-export SNYK_TOKEN=<token>
+export SNYK_TOKEN=<your-snyk-api-token>
 
 # Step 1: Discover all existing targets
-./snyk-refresh --groupId=237b9af7-7cc4-4325-9975-b33f6d1e14e6
+./snyk-refresh --groupId=<your-group-id>
 
 # Step 2: Review the file
 # (check refresh-import-targets.json to confirm targets look correct)
@@ -164,3 +175,18 @@ export SNYK_TOKEN=<token>
 # Step 3: Re-import to trigger SCA scanning
 snyk-api-import import --file=refresh-import-targets.json
 ```
+
+## Releasing
+
+Releases are automated via [GoReleaser](https://goreleaser.com/) and GitHub Actions. To create a new release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The [Release workflow](.github/workflows/release.yml) will build binaries for all supported platforms, generate a changelog, and publish a GitHub Release.
+
+## License
+
+Apache-2.0

@@ -52,7 +52,7 @@ changelog:
 
 release:
   github:
-    owner: snyk
+    owner: sam1el
     name: snyk-refresh
   prerelease: auto
   name_template: "{{.Tag}}"
