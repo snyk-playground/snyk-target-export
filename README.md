@@ -161,6 +161,59 @@ Custom branch configurations are preserved. If a project in Snyk monitors a non-
 
 When a project has no custom branch set, the import will use the repository's default branch.
 
+## Dedup: Remove Duplicate Projects
+
+If a re-import creates duplicate projects (or duplicate targets from different integrations), `snyk-refresh dedup` can find and remove them. By default it runs in dry-run mode (lists duplicates without deleting). Pass `--delete` to actually remove them.
+
+The dedup command performs two phases of cleanup:
+
+1. **Duplicate projects** -- for each set of projects with the same name, the oldest is kept and newer copies are deleted.
+2. **Orphaned targets** -- after project deletion, targets (repo-level entries) that are left empty are automatically detected and removed. This uses the Snyk Targets API with `exclude_empty=false` to find targets that no longer have any projects.
+
+### Find duplicates (dry-run)
+
+```bash
+./snyk-refresh dedup --groupId=<your-group-id>
+```
+
+### Find duplicates in a single org
+
+```bash
+./snyk-refresh dedup --orgId=<your-org-id>
+```
+
+### Delete duplicates
+
+```bash
+./snyk-refresh dedup --groupId=<your-group-id> --delete
+```
+
+### Dedup Options
+
+| Flag | Required | Default | Description |
+|------|----------|---------|-------------|
+| `--groupId` | One of groupId or orgId | | Snyk group ID. All orgs in this group will be scanned. |
+| `--orgId` | One of groupId or orgId | | Single Snyk org ID to scan. |
+| `--concurrency` | No | `5` | Number of organizations to process in parallel. |
+| `--delete` | No | `false` | Actually delete duplicates. Without this flag, only a report is printed. |
+| `--debug` | No | `false` | Print detailed project and target info for troubleshooting. |
+
+### Example output (dry-run)
+
+```
+Org: My Org (my-org)
+  DUPLICATE  nodejs-goof
+    keep:    abc12345-...  origin=github  created 2025-06-01T12:00:00Z
+    delete:  def67890-...  origin=github  created 2026-02-06T19:09:12Z
+
+Empty duplicate targets that would be removed:
+  target aaa111-...  (my-org/nodejs-goof, bitbucket-cloud): empty, would be deleted
+
+Summary: 3 duplicate project(s) across 2 org(s).
+         1 empty duplicate target(s) would be removed.
+Run with --delete to remove them.
+```
+
 ## Example: Adding SCA to Existing Snyk Code Projects
 
 ```bash
